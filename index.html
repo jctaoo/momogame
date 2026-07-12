@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纸牌接龙 - Klondike Solitaire</title>
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <div class="title">🃏 纸牌接龙</div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">步数</span><span class="val" id="s-moves">0</span></div>
+      <div class="stat"><span class="lbl">分数</span><span class="val" id="s-score">0</span></div>
+      <div class="stat"><span class="lbl">时间</span><span class="val" id="s-time">00:00</span></div>
+      <div id="diff-wrap">
+        <span class="diff-label">难度</span>
+        <select id="diff-select">
+          <option value="easy">简单</option>
+          <option value="normal" selected>普通</option>
+          <option value="hard">困难</option>
+        </select>
+      </div>
+      <div class="stat"><span class="lbl">重发</span><span class="val redeal-val" id="s-redeal">∞</span></div>
+      <button class="btn" id="btn-undo">↩ 撤销</button>
+      <button class="btn" id="btn-hint" style="background:linear-gradient(135deg,#0277bd,#01579b)">💡 提示</button>
+      <button class="btn" id="btn-sound" aria-pressed="true">🔊 音效</button>
+      <button class="btn" id="btn-new">🔄 新局</button>
+    </div>
+  </div>
+
+  <div id="board">
+    <div id="top-row">
+      <!-- Stock -->
+      <div class="pile-col" id="stock-pile"><div class="slot"></div></div>
+      <!-- Waste -->
+      <div class="pile-col" id="waste-pile"><div class="slot"></div></div>
+      <!-- Spacer -->
+      <div class="top-spacer"></div>
+      <!-- Foundations -->
+      <div class="pile-col fnd-col" data-fi="0"><div class="slot"><div class="suit-watermark">♠</div></div></div>
+      <div class="pile-col fnd-col" data-fi="1"><div class="slot"><div class="suit-watermark">♥</div></div></div>
+      <div class="pile-col fnd-col" data-fi="2"><div class="slot"><div class="suit-watermark">♦</div></div></div>
+      <div class="pile-col fnd-col" data-fi="3"><div class="slot"><div class="suit-watermark">♣</div></div></div>
+    </div>
+
+    <div id="tableau-row">
+      <div class="pile-col tab-col" data-ti="0"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="1"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="2"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="3"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="4"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="5"><div class="slot"></div></div>
+      <div class="pile-col tab-col" data-ti="6"><div class="slot"></div></div>
+    </div>
+  </div>
+</div>
+
+<button id="auto-btn">✨ 自动完成</button>
+<svg id="hint-arrow" xmlns="http://www.w3.org/2000/svg"></svg>
+<canvas id="fireworks"></canvas>
+<div id="win-overlay"><div id="win-box"><h1>🎉 恭喜通关！</h1><p id="win-stats"></p><button class="btn" id="btn-replay">再来一局</button></div></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

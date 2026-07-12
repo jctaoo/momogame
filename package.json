@@ -1,0 +1,17 @@
+{
+  "name": "solitaire-webgame",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/build-worker.cjs",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "cuelume": "^0.1.0"
+  }
+}
