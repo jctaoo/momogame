@@ -23,7 +23,8 @@
   --cr: calc(var(--cw) * 0.0875);
 
   /* 桌面叠放 / 废牌扇形 / 拖拽间距 */
-  --tab-up: calc(var(--cw) * 0.275);
+  /* 须容纳角标的点数与花色，避免下一张正面牌遮住小花色。 */
+  --tab-up: calc(var(--cw) * 0.35);
   --tab-down: calc(var(--cw) * 0.11);
   --waste-fan: calc(var(--cw) * 0.225);
   --drag-stack: var(--tab-up);
@@ -364,6 +365,7 @@ body::before {
   align-items: center;
   line-height: 1;
   font-weight: 700;
+  min-width: calc(var(--fs-rk) * 1.35);
 }
 
 .corner.tl {
