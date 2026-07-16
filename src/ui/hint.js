@@ -115,8 +115,10 @@ export function findAllMoves() {
     }
   }
 
-  // 过滤：整列正面牌平移到空桌面列（不翻新牌，无实质进展）
-  return moves.filter((move) => !isTrivialEmptyColumnMove(move));
+  // 过滤无实质进展的桌面列平移（避免来回挪牌循环提示）
+  return moves.filter(
+    (move) => !isTrivialEmptyColumnMove(move) && !isPointlessTableauTransfer(move)
+  );
 }
 
 /**
@@ -135,12 +137,84 @@ function isTrivialEmptyColumnMove(move) {
 }
 
 /**
+ * 桌面列→桌面列且不翻开底牌的平移：可来回挪，提示无意义
+ * （如 J 已在 Q 上，再挪到另一列 Q 下）
+ * @param {ReturnType<typeof findAllMoves>[0]} move
+ * @returns {boolean}
+ */
+function isPointlessTableauTransfer(move) {
+  if (move.fromType !== 't' || move.toType !== 't') return false;
+
+  const pile = state.tableau[move.sourceIndex];
+  // 能翻开背面牌 → 有进展，保留
+  if (move.cardIndex > 0 && !pile[move.cardIndex - 1].faceUp) return false;
+  // 整列搬走（腾出空列）可能有用，保留
+  if (move.cardIndex === 0) return false;
+
+  // 下方已是正面牌：纯换列，过滤
+  return true;
+}
+
+/**
  * 在源与目标之间绘制虚线箭头
  * @param {HTMLElement} sourceEl
  * @param {HTMLElement} targetEl
  */
-function drawHintArrow(sourceEl, targetEl) {
-  const svg = document.getElementById('hint-arrow');
+/**
+ * 二次贝塞尔终点切线角（弧度）
+ * @param {number} x1
+ * @param {number} y1
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} x2
+ * @param {number} y2
+ */
+function quadEndAngle(x1, y1, cx, cy, x2, y2) {
+  // B'(1) ∝ (end - control)
+  const dx = x2 - cx;
+  const dy = y2 - cy;
+  if (dx === 0 && dy === 0) return Math.atan2(y2 - y1, x2 - x1);
+  return Math.atan2(dy, dx);
+}
+
+/**
+ * 在终点绘制动漫风箭头头（多边形，不依赖 SVG marker）
+ * @param {number} x
+ * @param {number} y
+ * @param {number} angle
+ * @param {number} len
+ * @param {number} halfW
+ */
+function arrowHeadPoints(x, y, angle, len, halfW) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  // 尖端略超出终点
+  const tipX = x + cos * 2;
+  const tipY = y + sin * 2;
+  const baseX = tipX - cos * len;
+  const baseY = tipY - sin * len;
+  const ox = -sin * halfW;
+  const oy = cos * halfW;
+  const notchX = tipX - cos * (len * 0.55);
+  const notchY = tipY - sin * (len * 0.55);
+  return [
+    [tipX, tipY],
+    [baseX + ox, baseY + oy],
+    [notchX, notchY],
+    [baseX - ox, baseY - oy],
+  ]
+    .map(([ax, ay]) => `${ax},${ay}`)
+    .join(' ');
+}
+
+/**
+ * 生成单条提示箭头的 SVG 片段
+ * @param {HTMLElement} sourceEl
+ * @param {HTMLElement} targetEl
+ * @param {number} index - 用于错开重叠弧线
+ * @returns {string}
+ */
+function buildArrowSvg(sourceEl, targetEl, index) {
   const sr = sourceEl.getBoundingClientRect();
   const tr = targetEl.getBoundingClientRect();
 
@@ -148,20 +222,61 @@ function drawHintArrow(sourceEl, targetEl) {
   const y1 = sr.top + sr.height / 2;
   const x2 = tr.left + tr.width / 2;
   const y2 = tr.top + tr.height / 2;
-  const midX = (x1 + x2) / 2;
-  const midY = Math.min(y1, y2) - 30;
+  const dist = Math.hypot(x2 - x1, y2 - y1);
+  const lift = Math.min(90, Math.max(40, dist * 0.28)) + (index % 4) * 14;
+  const side = (index % 2 === 0 ? 1 : -1) * Math.floor(index / 2) * 22;
+  const midX = (x1 + x2) / 2 + side;
+  const midY = Math.min(y1, y2) - lift;
+  // 线在箭头根部收住，避免虚线盖住箭头头
+  const angle = quadEndAngle(x1, y1, midX, midY, x2, y2);
+  const headLen = 16;
+  const lineEndX = x2 - Math.cos(angle) * (headLen * 0.55);
+  const lineEndY = y2 - Math.sin(angle) * (headLen * 0.55);
+  const d = `M${x1},${y1} Q${midX},${midY} ${lineEndX},${lineEndY}`;
+
+  const outerPts = arrowHeadPoints(x2, y2, angle, headLen, 8);
+  const midPts = arrowHeadPoints(x2, y2, angle, headLen * 0.82, 5.5);
+  const corePts = arrowHeadPoints(x2, y2, angle, headLen * 0.55, 2.6);
+
+  return `
+    <g class="hint-arrow-group">
+      <path class="hint-path hint-path-outer" d="${d}"/>
+      <path class="hint-path hint-path-mid" d="${d}" filter="url(#hint-glow)"/>
+      <path class="hint-path hint-path-core" d="${d}"/>
+      <polygon class="hint-head hint-head-outer" points="${outerPts}"/>
+      <polygon class="hint-head hint-head-mid" points="${midPts}" filter="url(#hint-glow)"/>
+      <polygon class="hint-head hint-head-core" points="${corePts}"/>
+    </g>
+  `;
+}
+
+/**
+ * 同时绘制多条提示箭头
+ * @param {Array<{ sourceEl: HTMLElement, targetEl: HTMLElement }>} pairs
+ */
+function drawHintArrows(pairs) {
+  const svg = document.getElementById('hint-arrow');
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('width', String(w));
+  svg.setAttribute('height', String(h));
+
+  const bodies = pairs
+    .map((p, i) => buildArrowSvg(p.sourceEl, p.targetEl, i))
+    .join('');
 
   svg.innerHTML = `
     <defs>
-      <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-        <polygon points="0 0, 10 3.5, 0 7" fill="#4fc3f7"/>
-      </marker>
+      <filter id="hint-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.6" result="b"/>
+        <feMerge>
+          <feMergeNode in="b"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
     </defs>
-    <path d="M${x1},${y1} Q${midX},${midY} ${x2},${y2}"
-      stroke="#4fc3f7" stroke-width="2.5" fill="none" stroke-dasharray="6,4"
-      marker-end="url(#ah)" opacity="0.8">
-      <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="0.8s" repeatCount="indefinite"/>
-    </path>
+    ${bodies}
   `;
 }
 
@@ -202,7 +317,32 @@ function findSourceElement(move) {
   return sourceEl;
 }
 
-/** 展示最优提示 */
+/**
+ * 提示着法评分（越高越优先绘制在上层）
+ * @param {ReturnType<typeof findAllMoves>[0]} move
+ * @returns {number}
+ */
+function scoreMove(move) {
+  let score = 0;
+  if (move.toType === 'f') score += 50;
+  if (move.toType === 't') {
+    if (move.fromType === 'w') score += 15;
+    if (
+      move.fromType === 't' &&
+      move.cardIndex > 0 &&
+      !state.tableau[move.sourceIndex][move.cardIndex - 1].faceUp
+    ) {
+      score += 30;
+    }
+    if (state.tableau[move.toIndex].length === 0 && move.card.rank === 'K') {
+      score += 5;
+    }
+  }
+  if (move.cards.length === 1) score += 3;
+  return score;
+}
+
+/** 展示全部合法提示（多箭头 + 多高亮） */
 export function showHint() {
   clearHint();
 
@@ -214,48 +354,30 @@ export function showHint() {
 
   play('chime');
 
-  // 评分选最优
-  let best = null;
-  let bestScore = -999;
+  const ranked = [...moves].sort((a, b) => scoreMove(b) - scoreMove(a));
+  /** @type {Array<{ sourceEl: HTMLElement, targetEl: HTMLElement }>} */
+  const pairs = [];
 
-  for (const move of moves) {
-    let score = 0;
-    if (move.toType === 'f') score += 50;
-    if (move.toType === 't') {
-      if (move.fromType === 'w') score += 15;
-      if (
-        move.fromType === 't' &&
-        move.cardIndex > 0 &&
-        !state.tableau[move.sourceIndex][move.cardIndex - 1].faceUp
-      ) {
-        score += 30;
-      }
-      if (state.tableau[move.toIndex].length === 0 && move.card.rank === 'K') {
-        score += 5;
-      }
-    }
-    if (move.cards.length === 1) score += 3;
+  for (const move of ranked) {
+    const sourceEl = findSourceElement(move);
+    if (!sourceEl) continue;
 
-    if (score > bestScore) {
-      bestScore = score;
-      best = move;
-    }
+    const targetEl =
+      move.toType === 'f'
+        ? document.querySelectorAll('.fnd-col')[move.toIndex]
+        : document.querySelectorAll('.tab-col')[move.toIndex];
+    if (!targetEl) continue;
+
+    sourceEl.classList.add('hint-source');
+    targetEl.classList.add('hint-target');
+    pairs.push({ sourceEl, targetEl });
   }
 
-  if (!best) return;
+  if (!pairs.length) {
+    play('droplet');
+    return;
+  }
 
-  const sourceEl = findSourceElement(best);
-  if (!sourceEl) return;
-
-  sourceEl.classList.add('hint-source');
-
-  const targetEl =
-    best.toType === 'f'
-      ? document.querySelectorAll('.fnd-col')[best.toIndex]
-      : document.querySelectorAll('.tab-col')[best.toIndex];
-
-  if (targetEl) targetEl.classList.add('hint-target');
-  drawHintArrow(sourceEl, targetEl);
-
-  hintTimer = setTimeout(clearHint, 3000);
+  drawHintArrows(pairs);
+  hintTimer = setTimeout(clearHint, 4000);
 }

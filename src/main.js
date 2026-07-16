@@ -15,7 +15,9 @@ import {
   runAutoComplete,
   applyDifficulty,
   formatTime,
+  startTimer,
 } from './core/game.js';
+import { loadGame } from './core/persist.js';
 import { render, updateStats, setWinCheckCallback } from './ui/render.js';
 import { showHint } from './ui/hint.js';
 import { playFireworks } from './ui/effects.js';
@@ -114,7 +116,16 @@ function init() {
   loadSoundPreference();
   updateSoundButton();
   bindEvents();
-  newGame();
+
+  if (loadGame()) {
+    const select = document.getElementById('diff-select');
+    if (select) select.value = state.difficulty;
+    render();
+    if (state.timerStarted && !isWon()) startTimer();
+    if (isWon()) handleWin();
+  } else {
+    newGame();
+  }
 }
 
 init();

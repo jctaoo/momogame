@@ -7,6 +7,7 @@ import { DIFFICULTY, RANK_VALUE } from '../constants.js';
 import { state, resetStats, clearPiles } from './state.js';
 import { dealBestLayout } from './deck.js';
 import { canMoveToFoundation, canMoveToTableau, isWon } from './rules.js';
+import { saveGame } from './persist.js';
 
 /** UI 回调，由 main 注入，避免 core 反向依赖 ui */
 let onRender = () => {};
@@ -147,6 +148,7 @@ export function executeMove(cards, fromType, fromIndex, cardIndex, toType, toInd
 
   state.moves++;
   if (!state.timerStarted) startTimer();
+  saveGame();
   return true;
 }
 
@@ -192,6 +194,7 @@ export function drawFromStock() {
   play('toggle');
   state.moves++;
   if (!state.timerStarted) startTimer();
+  saveGame();
   onRender();
 }
 
@@ -333,6 +336,7 @@ export function undo() {
   }
 
   play('whisper');
+  saveGame();
   onRender();
 }
 
@@ -367,6 +371,7 @@ export function newGame() {
   }
 
   dealBestLayout();
+  saveGame();
   onRender();
   play('bloom');
 }

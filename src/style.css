@@ -476,8 +476,58 @@ body::before {
 #hint-arrow {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  width: 100%;
+  height: 100%;
+  z-index: 200;
   pointer-events: none;
+  overflow: visible;
+}
+
+#hint-arrow .hint-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: hintDash 0.55s linear infinite;
+}
+
+/* 动漫风：描边 + 亮青主线 + 高光芯（偏细） */
+#hint-arrow .hint-path-outer {
+  stroke: #1a237e;
+  stroke-width: 6;
+  stroke-dasharray: 10 7;
+  opacity: 0.9;
+}
+
+#hint-arrow .hint-path-mid {
+  stroke: #00e5ff;
+  stroke-width: 3.5;
+  stroke-dasharray: 9 7;
+  opacity: 0.95;
+}
+
+#hint-arrow .hint-path-core {
+  stroke: #e0ffff;
+  stroke-width: 1.5;
+  stroke-dasharray: 7 9;
+  opacity: 1;
+}
+
+#hint-arrow .hint-head-outer {
+  fill: #1a237e;
+}
+
+#hint-arrow .hint-head-mid {
+  fill: #00e5ff;
+}
+
+#hint-arrow .hint-head-core {
+  fill: #e0ffff;
+}
+
+@keyframes hintDash {
+  to {
+    stroke-dashoffset: -17;
+  }
 }
 
 /* ---------- 通关弹层 ---------- */

@@ -50,3 +50,6 @@ export const DIFFICULTY_LABEL = {
 
 /** localStorage 音效开关键名 */
 export const SOUND_STORAGE_KEY = 'solitaire-sound';
+
+/** localStorage 对局进度键名 */
+export const GAME_STORAGE_KEY = 'solitaire-game';
