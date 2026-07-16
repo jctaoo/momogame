@@ -114,7 +114,128 @@ export function scoreDeal(layout, drawCount) {
     });
   });
 
+  // 用一个有限步、无渲染的贪心试玩补足静态评分：更偏好能真正翻开背牌的局。
+  score += simulateOpening(layout, drawCount);
+
   return score;
+}
+
+/**
+ * 对候选开局做轻量试玩。它不是求解器：只模拟有限步的优先着法，
+ * 因此开局耗时始终受上限控制。
+ * @param {{ tableau: import('./state.js').Card[][], stock: import('./state.js').Card[] }} layout
+ * @param {number} drawCount
+ * @returns {number}
+ */
+function simulateOpening(layout, drawCount) {
+  const tableau = layout.tableau.map((pile) => pile.map((card) => ({ ...card })));
+  const stock = layout.stock.map((card) => ({ ...card }));
+  const waste = [];
+  const foundations = Array.from({ length: 4 }, () => []);
+  let exposed = 0;
+  let tableauMoves = 0;
+  let recycled = false;
+
+  const canFoundation = (card, index) => {
+    const pile = foundations[index];
+    if (!pile.length) return card.rank === 'A' && SUITS[index] === card.suit;
+    const top = pile[pile.length - 1];
+    return card.suit === top.suit && RANK_VALUE[card.rank] === RANK_VALUE[top.rank] + 1;
+  };
+  const canTableau = (card, index) => {
+    const pile = tableau[index];
+    if (!pile.length) return card.rank === 'K';
+    const top = pile[pile.length - 1];
+    return top.faceUp && card.color !== top.color && RANK_VALUE[card.rank] === RANK_VALUE[top.rank] - 1;
+  };
+  const reveal = (index) => {
+    const pile = tableau[index];
+    const top = pile[pile.length - 1];
+    if (top && !top.faceUp) {
+      top.faceUp = true;
+      exposed++;
+      return true;
+    }
+    return false;
+  };
+  const validStackFrom = (pile, start) => {
+    if (!pile[start]?.faceUp) return false;
+    for (let i = start; i < pile.length - 1; i++) {
+      if (!pile[i + 1].faceUp || pile[i].color === pile[i + 1].color ||
+        RANK_VALUE[pile[i].rank] !== RANK_VALUE[pile[i + 1].rank] + 1) return false;
+    }
+    return true;
+  };
+
+  // 36 步 × 最多 96 个候选局；只操作小数组，避免开局出现可感知卡顿。
+  for (let step = 0; step < 36; step++) {
+    let moved = false;
+
+    // 优先收可直接上基础区的牌。
+    const sources = [];
+    tableau.forEach((pile, index) => {
+      if (pile.length && pile[pile.length - 1].faceUp) sources.push({ pile, index, type: 't' });
+    });
+    if (waste.length) sources.push({ pile: waste, index: -1, type: 'w' });
+    for (const source of sources) {
+      const card = source.pile[source.pile.length - 1];
+      const foundationIndex = foundations.findIndex((_, i) => canFoundation(card, i));
+      if (foundationIndex < 0) continue;
+      foundations[foundationIndex].push(source.pile.pop());
+      if (source.type === 't') reveal(source.index);
+      moved = true;
+      break;
+    }
+    if (moved) continue;
+
+    // 其次优先能翻出背牌的桌面移动。
+    for (let from = 0; from < tableau.length && !moved; from++) {
+      const pile = tableau[from];
+      for (let start = 0; start < pile.length && !moved; start++) {
+        if (!validStackFrom(pile, start)) continue;
+        for (let to = 0; to < tableau.length; to++) {
+          if (to === from || !canTableau(pile[start], to)) continue;
+          tableau[to].push(...pile.splice(start));
+          reveal(from);
+          tableauMoves++;
+          moved = true;
+          break;
+        }
+      }
+    }
+    if (moved) continue;
+
+    // 最后尝试把废牌放回桌面；不行才继续翻牌。
+    if (waste.length) {
+      const card = waste[waste.length - 1];
+      const to = tableau.findIndex((_, index) => canTableau(card, index));
+      if (to >= 0) {
+        tableau[to].push(waste.pop());
+        tableauMoves++;
+        continue;
+      }
+    }
+    if (stock.length) {
+      for (let i = 0; i < Math.min(drawCount, stock.length); i++) {
+        const card = stock.pop();
+        card.faceUp = true;
+        waste.push(card);
+      }
+      continue;
+    }
+    if (waste.length && !recycled) {
+      while (waste.length) {
+        const card = waste.pop();
+        card.faceUp = false;
+        stock.push(card);
+      }
+      recycled = true;
+      continue;
+    }
+    break;
+  }
+
+  return exposed * 18 + foundations.reduce((sum, pile) => sum + pile.length, 0) * 4 + tableauMoves * 2;
 }
 
 /**
