@@ -5,14 +5,22 @@
 
 /* ---------- 设计令牌（随视口缩放） ---------- */
 :root {
-  /* 卡牌尺寸：七列铺满，上限 140px */
-  --cw: clamp(38px, calc((100vw - 2 * var(--pad) - 6 * var(--gap)) / 7), 140px);
-  --ch: calc(var(--cw) * 1.4);
-  --cr: calc(var(--cw) * 0.0875);
-
   /* 间距 */
   --gap: clamp(4px, 1.1vmin, 12px);
   --pad: clamp(6px, 1.2vmin, 12px);
+  --toolbar-h: 52px;
+
+  /*
+   * 卡牌尺寸：同时受宽/高约束，避免高 DPI 逻辑分辨率变矮时仍顶到上限显得过大。
+   * 宽：七列铺满；高：顶栏 + 上排 + 桌面叠牌约 7 个卡高单位。
+   */
+  --cw-w: calc((100vw - 2 * var(--pad) - 6 * var(--gap)) / 7);
+  --cw-h: calc(
+    (100dvh - 2 * var(--pad) - var(--toolbar-h) - 2 * var(--gap)) / 7
+  );
+  --cw: clamp(38px, min(var(--cw-w), var(--cw-h)), 120px);
+  --ch: calc(var(--cw) * 1.4);
+  --cr: calc(var(--cw) * 0.0875);
 
   /* 桌面叠放 / 废牌扇形 / 拖拽间距 */
   --tab-up: calc(var(--cw) * 0.275);
@@ -24,10 +32,10 @@
   --fs-rk: calc(var(--cw) * 0.1625);
   --fs-st: calc(var(--cw) * 0.1375);
   --fs-center: calc(var(--cw) * 0.425);
-  --fs-title: clamp(14px, 2.4vmin, 20px);
-  --fs-stat-lbl: calc(var(--cw) * 0.1375);
-  --fs-stat-val: calc(var(--cw) * 0.1875);
-  --fs-btn: calc(var(--cw) * 0.15);
+  --fs-title: clamp(13px, 2vmin, 18px);
+  --fs-stat-lbl: clamp(11px, calc(var(--cw) * 0.1375), 14px);
+  --fs-stat-val: clamp(12px, calc(var(--cw) * 0.1875), 18px);
+  --fs-btn: clamp(11px, calc(var(--cw) * 0.15), 14px);
 }
 
 /* ---------- 全局 ---------- */
