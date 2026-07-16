@@ -7,6 +7,38 @@
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
+  <!-- 开始界面：Logo 沿用游戏名称，菜单文案单独使用可维护的中文 HTML 文本。 -->
+  <section id="start-screen" class="start-screen" aria-label="开始菜单">
+    <div class="start-screen__shade"></div>
+    <div class="start-screen__content">
+      <div class="start-screen__logo" aria-label="纸牌接龙">
+        <span class="start-screen__logo-icon" aria-hidden="true">🃏</span>
+        <span>纸牌接龙</span>
+      </div>
+      <p class="start-screen__tagline">放松一下，来一局吧</p>
+      <nav class="start-screen__menu" aria-label="主菜单">
+        <button class="start-menu-button start-menu-button--primary" id="menu-start" type="button">开始游戏</button>
+        <button class="start-menu-button" id="menu-continue" type="button">继续游戏</button>
+        <button class="start-menu-button" id="menu-settings" type="button" aria-expanded="false">游戏设置</button>
+      </nav>
+      <div class="start-settings" id="start-settings" hidden>
+        <label for="menu-difficulty-trigger">难度</label>
+        <div class="comic-select" id="menu-difficulty">
+          <button class="comic-select__trigger" id="menu-difficulty-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span>普通</span><i aria-hidden="true"></i>
+          </button>
+          <div class="comic-select__options" id="menu-difficulty-options" role="listbox" hidden>
+            <button type="button" role="option" data-value="easy" aria-selected="false">简单</button>
+            <button type="button" role="option" data-value="normal" aria-selected="true">普通</button>
+            <button type="button" role="option" data-value="hard" aria-selected="false">困难</button>
+          </div>
+        </div>
+        <button id="menu-sound" type="button">音效：开</button>
+      </div>
+    </div>
+    <p class="start-screen__hint">点击“开始游戏”进入牌局</p>
+  </section>
+
   <div id="app">
     <!-- 顶栏：统计与操作 -->
     <div id="toolbar">
@@ -39,6 +71,7 @@
         <button class="btn" id="btn-undo">↩ 撤销</button>
         <button class="btn" id="btn-hint" style="background:linear-gradient(135deg,#0277bd,#01579b)">💡 提示</button>
         <button class="btn" id="btn-sound" aria-pressed="true">🔊 音效</button>
+        <button class="btn" id="btn-home" style="background:linear-gradient(135deg,#6d4c41,#4e342e)">⌂ 主页</button>
         <button class="btn" id="btn-new">🔄 新局</button>
       </div>
     </div>

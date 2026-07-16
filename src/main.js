@@ -17,7 +17,7 @@ import {
   formatTime,
   startTimer,
 } from './core/game.js';
-import { loadGame } from './core/persist.js';
+import { loadGame, saveGame } from './core/persist.js';
 import { render, updateStats, setWinCheckCallback } from './ui/render.js';
 import { showHint } from './ui/hint.js';
 import { playFireworks } from './ui/effects.js';
@@ -42,6 +42,55 @@ function toggleSound() {
   localStorage.setItem(SOUND_STORAGE_KEY, state.soundEnabled ? 'on' : 'off');
   updateSoundButton();
   if (state.soundEnabled) play('toggle');
+  updateStartSoundButton();
+}
+
+function updateStartSoundButton() {
+  const button = document.getElementById('menu-sound');
+  if (button) button.textContent = `音效：${state.soundEnabled ? '开' : '关'}`;
+}
+
+function closeStartScreen() {
+  document.getElementById('start-screen').classList.add('start-screen--hidden');
+}
+
+function openStartScreen() {
+  document.getElementById('start-screen').classList.remove('start-screen--hidden');
+}
+
+function returnToHome() {
+  if (state.timerId) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+  saveGame();
+  document.getElementById('menu-continue').disabled = false;
+  openStartScreen();
+}
+
+/** 为首页可点击控件提供统一的悬停与确认音效（音效总开关由 cuelume 控制）。 */
+function bindStartMenuSounds() {
+  const controls = document.querySelectorAll(
+    '.start-menu-button, #menu-sound, #menu-difficulty-trigger, #menu-difficulty-options button',
+  );
+  controls.forEach((control) => {
+    control.addEventListener('pointerenter', () => {
+      if (!control.disabled) play('whisper');
+    });
+    control.addEventListener('click', () => {
+      if (!control.disabled) play('press');
+    });
+  });
+}
+
+function setMenuDifficulty(value) {
+  const options = document.querySelectorAll('#menu-difficulty-options [data-value]');
+  const selected = [...options].find((option) => option.dataset.value === value);
+  if (!selected) return;
+  document.querySelector('#menu-difficulty-trigger span').textContent = selected.textContent;
+  options.forEach((option) => {
+    option.setAttribute('aria-selected', String(option === selected));
+  });
 }
 
 /* ---------- 通关 ---------- */
@@ -90,6 +139,48 @@ function bindEvents() {
     newGame();
   });
 
+  document.getElementById('menu-start').onclick = () => {
+    resetWinFlag();
+    newGame();
+    closeStartScreen();
+  };
+  document.getElementById('menu-continue').onclick = () => {
+    closeStartScreen();
+    if (state.timerStarted && !state.timerId && !isWon()) startTimer();
+  };
+  document.getElementById('menu-settings').onclick = () => {
+    const panel = document.getElementById('start-settings');
+    const expanded = panel.hidden;
+    panel.hidden = !expanded;
+    document.getElementById('menu-settings').setAttribute('aria-expanded', String(expanded));
+  };
+  document.getElementById('menu-difficulty-trigger').onclick = () => {
+    const options = document.getElementById('menu-difficulty-options');
+    const isOpening = options.hidden;
+    options.hidden = !isOpening;
+    document.getElementById('menu-difficulty-trigger').setAttribute('aria-expanded', String(isOpening));
+  };
+  document.querySelectorAll('#menu-difficulty-options [data-value]').forEach((option) => {
+    option.onclick = () => {
+      const value = option.dataset.value;
+      const select = document.getElementById('diff-select');
+      select.value = value;
+      setMenuDifficulty(value);
+      document.getElementById('menu-difficulty-options').hidden = true;
+      document.getElementById('menu-difficulty-trigger').setAttribute('aria-expanded', 'false');
+      applyDifficulty(value);
+      resetWinFlag();
+      newGame();
+    };
+  });
+  /* 首页设置与牌局顶栏的难度保持同步。 */
+  document.getElementById('diff-select').addEventListener('change', function () {
+    setMenuDifficulty(this.value);
+  });
+  document.getElementById('menu-sound').onclick = toggleSound;
+  document.getElementById('btn-home').onclick = returnToHome;
+  bindStartMenuSounds();
+
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
@@ -115,17 +206,23 @@ function init() {
 
   loadSoundPreference();
   updateSoundButton();
+  updateStartSoundButton();
   bindEvents();
 
-  if (loadGame()) {
+  const hasSavedGame = loadGame();
+  document.getElementById('menu-continue').disabled = !hasSavedGame;
+  if (hasSavedGame) {
     const select = document.getElementById('diff-select');
     if (select) select.value = state.difficulty;
+    setMenuDifficulty(state.difficulty);
     render();
     if (state.timerStarted && !isWon()) startTimer();
     if (isWon()) handleWin();
   } else {
     newGame();
   }
+
+  openStartScreen();
 }
 
 init();

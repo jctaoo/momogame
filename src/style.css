@@ -303,7 +303,7 @@ body::before {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18), inset 0 1px 0 #fff;
   display: flex;
   flex-direction: column;
-  padding: calc(var(--cw) * 0.0375) calc(var(--cw) * 0.0625);
+  padding: calc(var(--cw) * 0.04) calc(var(--cw) * 0.04);
   z-index: 1;
 }
 
@@ -379,11 +379,14 @@ body::before {
 
 .corner .rk {
   font-size: var(--fs-rk);
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .corner .st {
   font-size: var(--fs-st);
   margin-top: calc(var(--cw) * -0.0125);
+  line-height: 1;
 }
 
 .center-suit {
@@ -392,6 +395,208 @@ body::before {
   align-items: center;
   justify-content: center;
   font-size: var(--fs-center);
+}
+
+/* ---------- 美漫治愈风开始界面 ---------- */
+.start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #183529;
+  background: #8bd4f2 url('/src/assets/start-menu-meadow.png') center / cover no-repeat;
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  transition: opacity 360ms ease, visibility 360ms ease;
+}
+
+.start-screen--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.start-screen__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 250, 231, 0.78) 0%, rgba(255, 250, 231, 0.6) 39%, rgba(255, 250, 231, 0.06) 70%),
+    linear-gradient(0deg, rgba(21, 65, 42, 0.18), transparent 30%);
+}
+
+.start-screen__content {
+  position: relative;
+  width: min(420px, calc(100vw - 40px));
+  margin-right: min(36vw, 520px);
+  padding: 26px;
+}
+
+.start-screen__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 17px 10px;
+  border: 3px solid #183529;
+  border-radius: 12px 18px 13px 18px;
+  background: #fff3d0;
+  box-shadow: 5px 5px 0 #183529;
+  color: #183529;
+  font-size: clamp(34px, 5.4vw, 62px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: 1px 1px 0 #fff;
+  transform: rotate(-2deg);
+}
+
+.start-screen__logo-icon { font-size: 0.65em; }
+
+.start-screen__tagline {
+  margin: 26px 0 18px 8px;
+  color: #28513f;
+  font-size: clamp(16px, 2vw, 21px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.start-screen__menu { display: grid; gap: 12px; }
+
+.start-menu-button,
+.comic-select__trigger,
+.start-settings button {
+  width: 100%;
+  min-height: 58px;
+  border: 3px solid #183529;
+  border-radius: 14px;
+  background: #fff9e8;
+  color: #183529;
+  font: inherit;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #183529;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.start-menu-button:hover,
+.start-menu-button:focus-visible,
+.comic-select__trigger:focus-visible,
+.start-settings button:hover {
+  background: #fff;
+  outline: none;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #183529;
+}
+
+.start-menu-button:active,
+.start-settings button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #183529;
+}
+
+.start-menu-button--primary {
+  background: #f2b84b;
+  color: #172c22;
+}
+
+.start-menu-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  box-shadow: 2px 2px 0 #183529;
+}
+
+.start-settings {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px;
+  border: 2px solid rgba(24, 53, 41, 0.7);
+  border-radius: 14px;
+  background: rgba(255, 249, 232, 0.78);
+  font-weight: 800;
+}
+
+.start-settings button {
+  min-height: 42px;
+  border-width: 2px;
+  border-radius: 9px;
+  box-shadow: 2px 2px 0 #183529;
+  font-size: 16px;
+}
+
+.comic-select { position: relative; }
+
+.comic-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background-color: #fff9e8;
+}
+
+.comic-select__trigger i {
+  width: 12px;
+  height: 12px;
+  border-right: 3px solid #183529;
+  border-bottom: 3px solid #183529;
+  transform: translateY(-3px) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.comic-select__trigger[aria-expanded='true'] i {
+  transform: translateY(3px) rotate(225deg);
+}
+
+.comic-select__options {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  padding: 6px;
+  border: 3px solid #183529;
+  border-radius: 11px;
+  background: #fff9e8;
+  box-shadow: 4px 4px 0 #183529;
+}
+
+.comic-select__options button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.comic-select__options button:hover,
+.comic-select__options button[aria-selected='true'] {
+  background: #f2b84b;
+  transform: none;
+  box-shadow: none;
+}
+
+.start-settings button { grid-column: 1 / -1; }
+
+.start-screen__hint {
+  position: absolute;
+  bottom: 24px;
+  left: 30px;
+  color: rgba(24, 53, 41, 0.82);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 720px) {
+  .start-screen { background-position: 60% center; }
+  .start-screen__shade { background: rgba(255, 250, 231, 0.76); }
+  .start-screen__content { margin: 0; padding: 18px; }
+  .start-screen__hint { left: 50%; transform: translateX(-50%); white-space: nowrap; }
 }
 
 .card.red .card-front {
