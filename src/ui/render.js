@@ -114,15 +114,21 @@ function renderWaste() {
   }
 }
 
-/** 渲染四个基础区（只显示顶张） */
+/** 渲染四个基础区（只显示顶张，可拖回合法桌面列） */
 function renderFoundations() {
   document.querySelectorAll('.fnd-col').forEach((col, fi) => {
     col.querySelectorAll('.card').forEach((el) => el.remove());
 
     if (state.foundations[fi].length) {
-      const card = state.foundations[fi][state.foundations[fi].length - 1];
+      const cardIndex = state.foundations[fi].length - 1;
+      const card = state.foundations[fi][cardIndex];
       const el = createCardElement(card);
       el.style.top = '0';
+      attachDrag(
+        el, card, 'f', fi, cardIndex,
+        () => autoMoveCard('f', fi, cardIndex, render),
+        render
+      );
       col.appendChild(el);
     }
   });

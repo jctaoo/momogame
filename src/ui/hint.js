@@ -115,6 +115,21 @@ export function findAllMoves() {
     }
   }
 
+  // 基础区顶张 → 合法桌面列
+  for (let fi = 0; fi < 4; fi++) {
+    const pile = state.foundations[fi];
+    if (!pile.length) continue;
+    const card = pile[pile.length - 1];
+    for (let ti = 0; ti < 7; ti++) {
+      if (canMoveToTableau(card, ti)) {
+        moves.push({
+          card, fromType: 'f', sourceIndex: fi, cardIndex: pile.length - 1,
+          toType: 't', toIndex: ti, cards: [card],
+        });
+      }
+    }
+  }
+
   // 过滤无实质进展的桌面列平移（避免来回挪牌循环提示）
   return moves.filter(
     (move) => !isTrivialEmptyColumnMove(move) && !isPointlessTableauTransfer(move)
@@ -327,6 +342,7 @@ function scoreMove(move) {
   if (move.toType === 'f') score += 50;
   if (move.toType === 't') {
     if (move.fromType === 'w') score += 15;
+    if (move.fromType === 'f') score += 2;
     if (
       move.fromType === 't' &&
       move.cardIndex > 0 &&

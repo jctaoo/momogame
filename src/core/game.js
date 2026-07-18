@@ -227,6 +227,10 @@ export function findAutoMoveTarget(fromType, sourceIndex, cardIndex) {
     cards = [state.waste[state.waste.length - 1]];
   } else if (fromType === 't') {
     cards = getTableauStack(sourceIndex, cardIndex);
+  } else if (fromType === 'f') {
+    const pile = state.foundations[sourceIndex];
+    if (!pile.length) return null;
+    cards = [pile[pile.length - 1]];
   } else {
     return null;
   }
@@ -234,8 +238,8 @@ export function findAutoMoveTarget(fromType, sourceIndex, cardIndex) {
   if (!cards.length) return null;
   const card = cards[0];
 
-  // 1. 仅单张可进基础区
-  if (cards.length === 1) {
+  // 1. 仅单张可进基础区（基础区顶张只考虑移回桌面）
+  if (cards.length === 1 && fromType !== 'f') {
     for (let fi = 0; fi < 4; fi++) {
       if (canMoveToFoundation(card, fi)) {
         return { card, cards, toType: 'f', toIndex: fi };
