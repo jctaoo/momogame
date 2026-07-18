@@ -45,37 +45,59 @@
   <div id="app">
     <!-- 顶栏：统计与操作 -->
     <div id="toolbar">
-      <div class="title">🃏 纸牌接龙</div>
+      <div class="title">
+        <span class="title-emblem" aria-hidden="true">♛</span>
+        <span class="title-copy">纸牌接龙<small>KLONDIKE SOLITAIRE</small></span>
+      </div>
       <div class="stats">
-        <div class="stat">
-          <span class="lbl">步数</span>
-          <span class="val" id="s-moves">0</span>
+        <div class="toolbar-metrics" aria-label="牌局统计">
+          <div class="stat">
+            <i data-lucide="mouse-pointer-click" aria-hidden="true"></i>
+            <span class="lbl">步数</span>
+            <span class="val" id="s-moves">0</span>
+          </div>
+          <div class="stat">
+            <i data-lucide="trophy" aria-hidden="true"></i>
+            <span class="lbl">分数</span>
+            <span class="val" id="s-score">0</span>
+          </div>
+          <div class="stat stat--time">
+            <i data-lucide="timer" aria-hidden="true"></i>
+            <span class="lbl">时间</span>
+            <span class="val" id="s-time">00:00</span>
+          </div>
+          <div id="diff-wrap">
+            <i data-lucide="gauge" aria-hidden="true"></i>
+            <span class="diff-label">难度</span>
+            <select id="diff-select" aria-label="游戏难度">
+              <option value="easy">简单</option>
+              <option value="normal" selected>普通</option>
+              <option value="hard">困难</option>
+            </select>
+          </div>
+          <div class="stat stat--redeal">
+            <i data-lucide="refresh-ccw" aria-hidden="true"></i>
+            <span class="lbl">重发</span>
+            <span class="val" id="s-redeal">∞</span>
+          </div>
         </div>
-        <div class="stat">
-          <span class="lbl">分数</span>
-          <span class="val" id="s-score">0</span>
+        <div class="toolbar-actions" aria-label="牌局操作">
+          <button class="btn" id="btn-undo" type="button" title="撤销上一步">
+            <i data-lucide="undo-2" aria-hidden="true"></i><span>撤销</span>
+          </button>
+          <button class="btn" id="btn-hint" type="button" title="显示可行移动">
+            <i data-lucide="lightbulb" aria-hidden="true"></i><span>提示</span>
+          </button>
+          <button class="btn" id="btn-sound" type="button" aria-pressed="true" title="切换音效">
+            <i data-lucide="volume-2" aria-hidden="true"></i><span>音效</span>
+          </button>
+          <button class="btn" id="btn-home" type="button" title="返回主页">
+            <i data-lucide="house" aria-hidden="true"></i><span>主页</span>
+          </button>
+          <button class="btn" id="btn-new" type="button" title="开始新牌局">
+            <i data-lucide="rotate-ccw" aria-hidden="true"></i><span>新局</span>
+          </button>
         </div>
-        <div class="stat">
-          <span class="lbl">时间</span>
-          <span class="val" id="s-time">00:00</span>
-        </div>
-        <div id="diff-wrap">
-          <span class="diff-label">难度</span>
-          <select id="diff-select">
-            <option value="easy">简单</option>
-            <option value="normal" selected>普通</option>
-            <option value="hard">困难</option>
-          </select>
-        </div>
-        <div class="stat">
-          <span class="lbl">重发</span>
-          <span class="val" id="s-redeal">∞</span>
-        </div>
-        <button class="btn" id="btn-undo">↩ 撤销</button>
-        <button class="btn" id="btn-hint" style="background:linear-gradient(135deg,#0277bd,#01579b)">💡 提示</button>
-        <button class="btn" id="btn-sound" aria-pressed="true">🔊 音效</button>
-        <button class="btn" id="btn-home" style="background:linear-gradient(135deg,#6d4c41,#4e342e)">⌂ 主页</button>
-        <button class="btn" id="btn-new">🔄 新局</button>
       </div>
     </div>
 

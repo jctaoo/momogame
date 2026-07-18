@@ -4,6 +4,20 @@
  */
 
 import { play, setEnabled } from 'cuelume';
+import {
+  createIcons,
+  Gauge,
+  House,
+  Lightbulb,
+  MousePointerClick,
+  RefreshCcw,
+  RotateCcw,
+  Timer,
+  Trophy,
+  Undo2,
+  Volume2,
+  VolumeX,
+} from 'lucide';
 import { SOUND_STORAGE_KEY, DIFFICULTY_LABEL } from './constants.js';
 import { state } from './core/state.js';
 import { isWon } from './core/rules.js';
@@ -25,6 +39,31 @@ import { clearCssCache } from './utils/css.js';
 
 /* ---------- 音效 ---------- */
 
+const TOOLBAR_ICONS = {
+  Gauge,
+  House,
+  Lightbulb,
+  MousePointerClick,
+  RefreshCcw,
+  RotateCcw,
+  Timer,
+  Trophy,
+  Undo2,
+  Volume2,
+  VolumeX,
+};
+
+function renderToolbarIcons() {
+  createIcons({
+    icons: TOOLBAR_ICONS,
+    attrs: {
+      width: 17,
+      height: 17,
+      'stroke-width': 2.2,
+    },
+  });
+}
+
 function loadSoundPreference() {
   state.soundEnabled = localStorage.getItem(SOUND_STORAGE_KEY) !== 'off';
   setEnabled(state.soundEnabled);
@@ -32,8 +71,11 @@ function loadSoundPreference() {
 
 function updateSoundButton() {
   const btn = document.getElementById('btn-sound');
-  btn.textContent = state.soundEnabled ? '🔊 音效' : '🔇 静音';
+  btn.innerHTML = state.soundEnabled
+    ? '<i data-lucide="volume-2" aria-hidden="true"></i><span>音效</span>'
+    : '<i data-lucide="volume-x" aria-hidden="true"></i><span>静音</span>';
   btn.setAttribute('aria-pressed', String(state.soundEnabled));
+  renderToolbarIcons();
 }
 
 function toggleSound() {

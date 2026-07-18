@@ -15,6 +15,61 @@ import { clearHint } from './hint.js';
 let onWinCheck = () => {};
 
 /**
+ * 让统计数字从当前值滚动到目标值。
+ * 使用 data-rolling-value 保存动画中的数值，避免 render 高频调用时跳帧或重置动画。
+ * @param {HTMLElement} element
+ * @param {number} target
+ * @param {(value: number) => string} [format]
+ */
+function rollStat(element, target, format = (value) => String(value)) {
+  const next = Math.max(0, Math.round(target));
+  const current = Number(element.dataset.rollingValue);
+  const from = Number.isFinite(current) ? current : next;
+
+  if (from === next || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (element._rollingFrame) cancelAnimationFrame(element._rollingFrame);
+    element._rollingFrame = null;
+    element.dataset.rollingValue = String(next);
+    element.textContent = format(next);
+    element.classList.remove('val--rolling');
+    return;
+  }
+
+  if (element._rollingFrame) cancelAnimationFrame(element._rollingFrame);
+  const startedAt = performance.now();
+  const duration = Math.min(620, 260 + Math.abs(next - from) * 18);
+  element.classList.add('val--rolling');
+
+  const tick = (now) => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - (1 - progress) ** 3;
+    const value = Math.round(from + (next - from) * eased);
+    element.dataset.rollingValue = String(value);
+    element.textContent = format(value);
+
+    if (progress < 1) {
+      element._rollingFrame = requestAnimationFrame(tick);
+    } else {
+      element._rollingFrame = null;
+      element.dataset.rollingValue = String(next);
+      element.textContent = format(next);
+      window.setTimeout(() => element.classList.remove('val--rolling'), 120);
+    }
+  };
+
+  element._rollingFrame = requestAnimationFrame(tick);
+}
+
+/** @param {HTMLElement} element @param {string} value */
+function setStatText(element, value) {
+  if (element._rollingFrame) cancelAnimationFrame(element._rollingFrame);
+  element._rollingFrame = null;
+  delete element.dataset.rollingValue;
+  element.classList.remove('val--rolling');
+  element.textContent = value;
+}
+
+/**
  * @param {Function} callback
  */
 export function setWinCheckCallback(callback) {
@@ -23,17 +78,18 @@ export function setWinCheckCallback(callback) {
 
 /** 更新工具栏统计数字 */
 export function updateStats() {
-  document.getElementById('s-moves').textContent = state.moves;
-  document.getElementById('s-score').textContent = state.score;
-  document.getElementById('s-time').textContent = formatTime();
+  rollStat(document.getElementById('s-moves'), state.moves);
+  rollStat(document.getElementById('s-score'), state.score);
+  rollStat(document.getElementById('s-time'), state.elapsedSeconds, (value) => formatTime(value));
 
   const redealEl = document.getElementById('s-redeal');
   if (state.maxRedeals < 0) {
-    redealEl.textContent = '∞';
+    setStatText(redealEl, '∞');
     redealEl.style.color = '#ffe082';
   } else {
     const remaining = state.maxRedeals - state.redealsUsed;
-    redealEl.textContent = remaining > 0 ? remaining : '无';
+    if (remaining > 0) rollStat(redealEl, remaining);
+    else setStatText(redealEl, '无');
     redealEl.style.color = remaining <= 1 ? '#ef5350' : '#ffe082';
   }
 }

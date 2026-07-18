@@ -12,6 +12,7 @@
     "vite": "^5.4.0"
   },
   "dependencies": {
-    "cuelume": "^0.1.0"
+    "cuelume": "^0.1.0",
+    "lucide": "^1.25.0"
   }
 }

@@ -364,7 +364,6 @@ export function newGame() {
   const select = document.getElementById('diff-select');
   applyDifficulty(select ? select.value : state.difficulty);
 
-  document.getElementById('s-time').textContent = '00:00';
   document.getElementById('win-overlay').classList.remove('show');
   document.getElementById('auto-btn').style.display = 'none';
 
